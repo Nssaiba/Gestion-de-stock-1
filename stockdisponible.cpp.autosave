@@ -1,0 +1,50 @@
+#include "stockdisponible.h"
+#include "ui_stockdisponible.h"
+#include <QSqlError>
+#include <QSqlQuery>
+#include <QDebug>
+#include <QSqlQueryModel>
+
+StockDisponible::StockDisponible(QWidget *parent) :
+    QDialog(parent),
+    ui(new Ui::StockDisponible)
+{
+    ui->setupUi(this);
+}
+
+StockDisponible::~StockDisponible()
+{
+    delete ui;
+}
+
+void StockDisponible::on_btnStockDispo_clicked()
+{
+    QString NomP = ui->txtNomPDispo->text();
+    
+    QSqlDatabase db = QSqlDatabase::addDatabase("QSQLITE");
+    db.setDatabaseName("c:/Users/Dell/gestion_stock.db");
+
+    if (!db.open())
+    {
+        qDebug() << "Database connection error: " << db.lastError().text();
+        return;
+    }
+    QSqlQuery query(db);
+    query.prepare("SELECT Id, Name, Quantity FROM Produit WHERE Name LIKE :NomP");
+    query.bindValue(":NomP", "%" + NomP + "%");
+
+    // Exécute la requête
+    if (!query.exec()) {
+        qDebug() << "Query execution error: " << query.lastError().text();
+        return;
+    }
+    QSqlQueryModel *model = new QSqlQueryModel();
+
+    // Configure le modèle avec la requête
+    model->setQuery(query);
+    ui->tableView->setModel(model);
+    ui->tableView->setColumnWidth(0, 150);
+    ui->tableView->setColumnWidth(1, 200);
+    ui->tableView->setColumnWidth(2, 200);
+    qDebug() << "Rows count: " << model->rowCount();
+}
